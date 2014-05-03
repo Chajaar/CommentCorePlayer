@@ -194,28 +194,57 @@ function CommentDisplay() {
 
         // post danmaku
         if (jQuery('input:text[name="comment"]').val() !== '') {
-            var stime = parseFloat(Math.round(self.position / 1000)),
+			var cmt = {};
+                cmt.stime = self.position,
+                cmt.mode = parseInt(jQuery('select#mode').val(), 10),
+                cmt.size = jQuery('select#fontsize').val(),
+                cmt.text = jQuery('input:text[name="comment"]').val(),
+                cmt.color = "#FFFFFF",
+                stime = parseFloat(Math.round(cmt.stime / 1000)),
                 sec = zerofill(stime % 60, 2),
                 min = Math.floor(stime / 60),
-                text = jQuery('input:text[name="comment"]').val(),
                 time = new Date(),
                 date = time.getFullYear() + '-' + zerofill(time.getMonth() + 1, 2) +
                     '-' + zerofill(time.getDate(), 2) + ' ' + zerofill(time.getHours(), 2) +
                     ':' + zerofill(time.getMinutes(), 2);
 
-            // display it on screen
-            self.cm.sendComment({   // only 'mode' and 'text' are required
-                //stime:stime,
-                mode: parseInt(jQuery('select#mode').val(), 10),
-                text: text,
-                size: jQuery('select#fontsize').val()
-            });
+            function displaySentDanmaku () {
+                // CommentManager insert
+                self.cm.timeline.binsert(cmt,function(a,b){
+					if(a.stime < b.stime){
+						return -1;
+					}else if (a.stime == b.stime){
+						return 0;
+					}else{return 1;}
+				});
 
-            // add to cmtList
-            jQuery('div.cmtList table#CommentList tbody').append(
-                '<tr><td><div>' + min + ':' + sec + '</div></td><td><div>' +
-                text + '</div></td><td><div>' + date + '</div></td></tr>'
-            );
+                // add to comment list if post succeeds
+                jQuery('div.cmtList table#CommentList tbody').append(
+                    '<tr><td><div>' + min + ':' + sec + '</div></td><td><div>' +
+                    cmt.text + '</div></td><td><div>' + date + '</div></td></tr>'
+                );
+                
+                jQuery('input:text[name="comment"]').attr("placeholder", "comment sent")
+            }
+
+            function displaySendFailure () {
+                jQuery('input:text[name="comment"]').attr("placeholder", "comment failed")
+            }
+
+            jQuery.ajax({
+                type: "POST",
+                url: '/danmaku',
+                data: {
+                    cid: cid,
+                    stime: stime,
+                    mode: cmt.mode,
+                    message: cmt.text,
+                    size: cmt.size,
+                    color: 16777215
+                },
+                success: displaySentDanmaku,
+                error: displaySendFailure
+            });
 
             // clear input
             jQuery('input:text[name="comment"]').val('');
