@@ -200,6 +200,7 @@ function CommentDisplay() {
                 cmt.size = jQuery('select#fontsize').val(),
                 cmt.text = jQuery('input:text[name="comment"]').val(),
                 cmt.color = "#FFFFFF",
+                cmt.border = true,
                 stime = parseFloat(Math.round(cmt.stime / 1000)),
                 sec = zerofill(stime % 60, 2),
                 min = Math.floor(stime / 60),
